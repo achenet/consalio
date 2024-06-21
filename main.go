@@ -1,29 +1,32 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 // consalio
 // now with more health gage
-type Project struct {
-	Id int
-}
 
 // blue - This project is doing better than expected. You're either very lucky, doing something right, or both. Celebrate!
 // green - on time, on budget :)
 // orange - uh oh... some overruns
 // red - CRITICAL PROBLEMS WITH THIS PROJECT DO SOMETHING NOW
 func main() {
-	fmt.Printf("Health check of project: \n", HealthCheck(1))
 	r := gin.Default()
 
 	r.GET("/:id", func(c *gin.Context) {
-		id := c.Params("id")
-		c.HTML(http.StatusOK, "index.html", gin.H{})
+		idStr := c.Param("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+			return
+		}
+		c.HTML(http.StatusOK,
+			"index.html",
+			gin.H{"Id": idStr, "Color": HealthCheck(id)})
 	})
 
 	r.Run()
@@ -48,16 +51,14 @@ var expectedSpend = map[int]float64{
 	4: 10,
 }
 
-type Health uint
-
 const (
-	BLUE Health = iota
-	GREEN
-	ORANGE
-	RED
+	BLUE   = "blue"
+	GREEN  = "green"
+	ORANGE = "orange"
+	RED    = "red"
 )
 
-func HealthCheck(id int) Health {
+func HealthCheck(id int) string {
 	invoices := ProjectInvoices(id)
 	spent := 0.0
 	for _, inv := range invoices {
