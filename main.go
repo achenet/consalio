@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -16,17 +18,49 @@ import (
 // red - CRITICAL PROBLEMS WITH THIS PROJECT DO SOMETHING NOW
 func main() {
 	r := gin.Default()
+	r.LoadHTMLGlob("templates/*")
+	r.Static("/images", "./images")
+	r.StaticFile("/favicon.ico", "./favicon.ico")
+
+	getById := func(c *gin.Context, id int) {
+		color := HealthCheck(id)
+		log.Printf("color: %s\n", color)
+		img := fmt.Sprintf("/images/%s.png", color)
+		log.Printf("img: %s\n", img)
+		c.HTML(http.StatusOK,
+			"index.html",
+			gin.H{"Id": id, "Img": img, "Color": color})
+	}
 
 	r.GET("/:id", func(c *gin.Context) {
 		idStr := c.Param("id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"Error": err.Error()})
 			return
 		}
-		c.HTML(http.StatusOK,
-			"index.html",
-			gin.H{"Id": idStr, "Color": HealthCheck(id)})
+		getById(c, id)
+	})
+	r.GET("/", func(c *gin.Context) {
+		getById(c, 1)
+	})
+	r.GET("/next/:id", func(c *gin.Context) {
+		idStr := c.Param("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"Error": err.Error()})
+			return
+		}
+		getById(c, id+1)
+	})
+	r.GET("/prev/:id", func(c *gin.Context) {
+		idStr := c.Param("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"Error": err.Error()})
+			return
+		}
+		getById(c, id-1)
 	})
 
 	r.Run()
