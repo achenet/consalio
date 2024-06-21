@@ -1,9 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 // consalio
 // now with more health gage
+type Project struct {
+	Id int
+}
 
 // blue - This project is doing better than expected. You're either very lucky, doing something right, or both. Celebrate!
 // green - on time, on budget :)
@@ -11,6 +19,14 @@ import "fmt"
 // red - CRITICAL PROBLEMS WITH THIS PROJECT DO SOMETHING NOW
 func main() {
 	fmt.Printf("Health check of project: \n", HealthCheck(1))
+	r := gin.Default()
+
+	r.GET("/:id", func(c *gin.Context) {
+		id := c.Params("id")
+		c.HTML(http.StatusOK, "index.html", gin.H{})
+	})
+
+	r.Run()
 }
 
 // I don't actually know how Invoices work
@@ -27,6 +43,9 @@ func ProjectInvoices(id int) []Invoice {
 
 var expectedSpend = map[int]float64{
 	1: 100,
+	2: 100,
+	3: 5,
+	4: 10,
 }
 
 type Health uint
